@@ -60,14 +60,46 @@ function selectPreferredUkFemaleVoice(): SpeechSynthesisVoice | null {
   return pool[0] ?? null
 }
 
+/** Avoid spelling-style pronunciation for function words in isolation. */
+function normalizeUtteranceText(text: string): string {
+  const trimmed = text.trim().toLowerCase()
+  if (trimmed === 'a') return 'uh'
+  if (trimmed === 'the') return 'thuh'
+  return text
+}
+
+/**
+ * Prefer clearer synthesis variants and avoid compact/muffled voices.
+ */
+function scoreVoiceForClarity(voice: SpeechSynthesisVoice): number {
+  let score = 0
+  if (isUkEnglishVoice(voice)) score += 50
+  if (/google uk english female|libby|sonia|serena|martha|kate|maisie|female/i.test(voice.name)) score += 20
+  if (/enhanced|premium|neural|online|natural/i.test(voice.name)) score += 8
+  if (/compact|whisper|muffled|low quality/i.test(voice.name)) score -= 12
+  if (!voice.localService) score += 2
+  return score
+}
+
+function selectBestUkVoice(): SpeechSynthesisVoice | null {
+  const preferred = selectPreferredUkFemaleVoice()
+  const voices = window.speechSynthesis.getVoices()
+  if (!voices.length) return preferred
+  const ukVoices = voices.filter(isUkEnglishVoice)
+  const pool = ukVoices.length > 0 ? ukVoices : voices.filter((v) => normalizeLang(v.lang).startsWith('en'))
+  if (!pool.length) return preferred
+  return [...pool].sort((a, b) => scoreVoiceForClarity(b) - scoreVoiceForClarity(a))[0] ?? preferred
+}
+
 function speakWithVoices(text: string): void {
   window.speechSynthesis.cancel()
-  const utterance = new SpeechSynthesisUtterance(text)
-  utterance.rate = 0.78
-  utterance.pitch = 1.0
+  const utterance = new SpeechSynthesisUtterance(normalizeUtteranceText(text))
+  // Slightly faster and brighter than before to reduce muddy output.
+  utterance.rate = 0.92
+  utterance.pitch = 1.08
   utterance.volume = 1
 
-  const voice = selectPreferredUkFemaleVoice()
+  const voice = selectBestUkVoice()
   if (voice) {
     utterance.voice = voice
     utterance.lang = normalizeLang(voice.lang).startsWith('en') ? voice.lang : UK_LANG
