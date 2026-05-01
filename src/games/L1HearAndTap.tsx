@@ -60,11 +60,21 @@ export function L1HearAndTap() {
         <>
           <p className="mb-3 text-lg">Round {round} / {totalRounds}</p>
           <BigButton label="Hear the Word" onClick={() => speak(current.answer)} />
-          {selected !== null ? (
-            <p className={`mt-3 text-lg font-semibold ${isCorrectPick ? 'text-green-700' : 'text-amber-700'}`}>
-              {isCorrectPick ? 'Great job!' : `Not quite. Correct answer: ${current.answer}`}
-            </p>
-          ) : null}
+          <div className="mt-3 min-h-14">
+            {selected !== null ? (
+              <p
+                role="status"
+                aria-live="polite"
+                className={`rounded-xl border px-3 py-2 text-base font-semibold md:text-lg ${
+                  isCorrectPick
+                    ? 'border-green-300 bg-green-50 text-green-800'
+                    : 'border-amber-300 bg-amber-50 text-amber-800'
+                }`}
+              >
+                {isCorrectPick ? 'Great job!' : `Not quite. Correct answer: ${current.answer}`}
+              </p>
+            ) : null}
+          </div>
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             {current.options.map((option) => (
               <button

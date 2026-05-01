@@ -60,11 +60,21 @@ export function L2MissingLetter() {
           <p className="text-lg">Round {round}/{rounds}</p>
           <p className="my-3 text-5xl">{question.emoji}</p>
           <p className="mb-3 text-3xl font-bold">{question.prompt}</p>
-          {selected !== null ? (
-            <p className={`mb-3 text-lg font-semibold ${isCorrectPick ? 'text-green-700' : 'text-amber-700'}`}>
-              {isCorrectPick ? 'Great job!' : `Not quite. Correct answer: ${question.missing}`}
-            </p>
-          ) : null}
+          <div className="mb-3 min-h-14">
+            {selected !== null ? (
+              <p
+                role="status"
+                aria-live="polite"
+                className={`rounded-xl border px-3 py-2 text-base font-semibold md:text-lg ${
+                  isCorrectPick
+                    ? 'border-green-300 bg-green-50 text-green-800'
+                    : 'border-amber-300 bg-amber-50 text-amber-800'
+                }`}
+              >
+                {isCorrectPick ? 'Great job!' : `Not quite. Correct answer: ${question.missing}`}
+              </p>
+            ) : null}
+          </div>
           <div className="grid grid-cols-5 gap-2">
             {vowels.map((vowel) => (
               <button
