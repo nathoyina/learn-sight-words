@@ -123,6 +123,15 @@ export async function kidGetProgress(studentId: string, pin: string): Promise<Pr
   return toProgress(data)
 }
 
+export async function kidGetClassCode(studentId: string, pin: string): Promise<string | null> {
+  const { data, error } = await supabase.rpc('kid_get_class_code', {
+    student_id: studentId,
+    pin,
+  })
+  if (error) throw error
+  return typeof data === 'string' && data.trim() ? data.trim().toUpperCase() : null
+}
+
 export async function kidUpdateProgress(studentId: string, pin: string, progress: Progress): Promise<void> {
   const { error } = await supabase.rpc('kid_update_progress', {
     student_id: studentId,

@@ -10,9 +10,29 @@ function normalizeSession(parsed: Partial<ActiveStudentSession>): ActiveStudentS
 }
 
 const ACTIVE_STUDENT_KEY = 'sight-word-adventure-active-student'
+const LAST_CLASS_CODE_KEY = 'sight-word-adventure-last-class-code'
 
 function cacheKey(studentId: string): string {
   return `sight-word-adventure-progress-cache:${studentId}`
+}
+
+export function setLastClassCode(code: string | null): void {
+  if (!code) {
+    localStorage.removeItem(LAST_CLASS_CODE_KEY)
+    return
+  }
+  localStorage.setItem(LAST_CLASS_CODE_KEY, code)
+}
+
+export function getLastClassCode(): string | null {
+  try {
+    const raw = localStorage.getItem(LAST_CLASS_CODE_KEY)
+    if (!raw) return null
+    const trimmed = raw.trim()
+    return trimmed ? trimmed : null
+  } catch {
+    return null
+  }
 }
 
 export function setActiveStudent(session: ActiveStudentSession | null): void {

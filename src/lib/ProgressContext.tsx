@@ -4,6 +4,7 @@ import { supabase } from './supabase'
 import {
   createClass,
   getTeacherUser,
+  kidGetClassCode,
   kidGetProgress,
   kidLogin,
   kidSelfJoin,
@@ -15,7 +16,7 @@ import {
   teacherSignUp as apiTeacherSignUp,
   updateClass as apiUpdateClass,
 } from './api'
-import { cacheProgress, getActiveStudent, loadCachedProgress, setActiveStudent } from './storage'
+import { cacheProgress, getActiveStudent, getLastClassCode, loadCachedProgress, setActiveStudent, setLastClassCode } from './storage'
 import type { ActiveStudentSession, LevelId, Progress, TeacherInfo } from './types'
 import { ProgressContext } from './progress-context'
 import type { ProgressContextValue } from './progress-context'
@@ -124,6 +125,15 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
       setProgress(normalized)
       cacheProgress(session.studentId, normalized)
       setSyncError(null)
+
+      if (!getLastClassCode()) {
+        try {
+          const code = await kidGetClassCode(session.studentId, session.pin)
+          if (code) setLastClassCode(code)
+        } catch {
+          // Non-fatal: class code backfill will retry on next hydration.
+        }
+      }
     } catch {
       const cached = loadCachedProgress(session.studentId)
       if (cached) {
@@ -215,6 +225,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
           const session: ActiveStudentSession = { studentId, pin, displayName }
           setActiveStudent(session)
           setActiveStudentState(session)
+          setLastClassCode(classCode)
           return null
         } catch (error) {
           return mapKidLoginError(error)
@@ -227,6 +238,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
           const session: ActiveStudentSession = { studentId, pin, displayName }
           setActiveStudent(session)
           setActiveStudentState(session)
+          setLastClassCode(classCode)
           return null
         } catch (error) {
           return mapKidJoinError(error)

@@ -168,6 +168,40 @@ $$;
 
 grant execute on function public.kid_get_progress(uuid, text) to anon, authenticated;
 
+create or replace function public.kid_get_class_code(student_id uuid, pin text)
+returns text
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  target_student public.students%rowtype;
+  class_code_value text;
+begin
+  select * into target_student
+  from public.students
+  where id = student_id
+  limit 1;
+
+  if target_student.id is null then
+    raise exception 'student_not_found';
+  end if;
+
+  if extensions.crypt(pin, target_student.pin_hash) <> target_student.pin_hash then
+    raise exception 'invalid_login';
+  end if;
+
+  select code into class_code_value
+  from public.classes
+  where id = target_student.class_id
+  limit 1;
+
+  return class_code_value;
+end;
+$$;
+
+grant execute on function public.kid_get_class_code(uuid, text) to anon, authenticated;
+
 create or replace function public.kid_update_progress(student_id uuid, pin text, new_progress jsonb)
 returns void
 language plpgsql
