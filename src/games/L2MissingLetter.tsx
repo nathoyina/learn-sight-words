@@ -9,6 +9,7 @@ import { toStars } from '../lib/scoring'
 
 const vowels = ['a', 'e', 'i', 'o', 'u']
 const rounds = 5
+const FEEDBACK_DELAY_MS = 1600
 
 function makeQuestion() {
   const item = cvcWords[Math.floor(Math.random() * cvcWords.length)]
@@ -22,21 +23,33 @@ export function L2MissingLetter() {
   const [round, setRound] = useState(1)
   const [correct, setCorrect] = useState(0)
   const [done, setDone] = useState(false)
+  const [selected, setSelected] = useState<string | null>(null)
+  const [isCorrectPick, setIsCorrectPick] = useState<boolean | null>(null)
   const stars = useMemo(() => toStars(correct, rounds), [correct])
 
   const choose = (vowel: string) => {
+    if (selected !== null) return
+    const isCorrect = vowel === question.missing
+    setSelected(vowel)
+    setIsCorrectPick(isCorrect)
     const next = correct + (vowel === question.missing ? 1 : 0)
-    if (round >= rounds) {
-      const earned = toStars(next, rounds)
-      awardStars('l2-missing-letter', earned)
-      if (earned >= 2) addSticker('🔤')
+    window.setTimeout(() => {
+      if (round >= rounds) {
+        const earned = toStars(next, rounds)
+        awardStars('l2-missing-letter', earned)
+        if (earned >= 2) addSticker('🔤')
+        setCorrect(next)
+        setDone(true)
+        setSelected(null)
+        setIsCorrectPick(null)
+        return
+      }
       setCorrect(next)
-      setDone(true)
-      return
-    }
-    setCorrect(next)
-    setRound((v) => v + 1)
-    setQuestion(makeQuestion())
+      setRound((v) => v + 1)
+      setQuestion(makeQuestion())
+      setSelected(null)
+      setIsCorrectPick(null)
+    }, FEEDBACK_DELAY_MS)
   }
 
   return (
@@ -47,9 +60,29 @@ export function L2MissingLetter() {
           <p className="text-lg">Round {round}/{rounds}</p>
           <p className="my-3 text-5xl">{question.emoji}</p>
           <p className="mb-3 text-3xl font-bold">{question.prompt}</p>
+          {selected !== null ? (
+            <p className={`mb-3 text-lg font-semibold ${isCorrectPick ? 'text-green-700' : 'text-amber-700'}`}>
+              {isCorrectPick ? 'Great job!' : `Not quite. Correct answer: ${question.missing}`}
+            </p>
+          ) : null}
           <div className="grid grid-cols-5 gap-2">
             {vowels.map((vowel) => (
-              <button key={vowel} className="rounded-xl bg-white p-3 text-2xl shadow" onClick={() => choose(vowel)}>{vowel}</button>
+              <button
+                key={vowel}
+                className={`rounded-xl p-3 text-2xl shadow ${
+                  selected === null
+                    ? 'bg-white'
+                    : vowel === question.missing
+                      ? 'bg-green-200'
+                      : vowel === selected
+                        ? 'bg-rose-200'
+                        : 'bg-white'
+                }`}
+                disabled={selected !== null}
+                onClick={() => choose(vowel)}
+              >
+                {vowel}
+              </button>
             ))}
           </div>
         </>

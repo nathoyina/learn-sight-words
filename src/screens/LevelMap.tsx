@@ -78,6 +78,22 @@ export function LevelMap() {
                         : state === 'current'
                           ? '▶'
                           : String(idx + 1)
+                  const feedbackLabel =
+                    state === 'locked'
+                      ? 'Locked'
+                      : stars >= 2
+                        ? 'Great job'
+                        : stars >= 1
+                          ? 'Keep practicing'
+                          : 'Try this game'
+                  const feedbackClass =
+                    state === 'locked'
+                      ? 'bg-slate-200 text-slate-600'
+                      : stars >= 2
+                        ? 'bg-green-100 text-green-800'
+                        : stars >= 1
+                          ? 'bg-amber-100 text-amber-800'
+                          : 'bg-sky-100 text-sky-800'
 
                   return (
                     <div key={game.id} className="flex gap-3">
@@ -91,7 +107,12 @@ export function LevelMap() {
                         {!isLast ? <div className="min-h-6 w-0.5 flex-1 bg-sky-300" aria-hidden /> : null}
                       </div>
                       <article className={`min-w-0 flex-1 ${isLast ? '' : 'pb-5'}`}>
-                        <h3 className="text-lg font-semibold text-slate-800">{game.title}</h3>
+                        <div className="mb-1 flex flex-wrap items-center gap-2">
+                          <h3 className="text-lg font-semibold text-slate-800">{game.title}</h3>
+                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${feedbackClass}`}>
+                            {feedbackLabel}
+                          </span>
+                        </div>
                         <p className="mb-2 text-sm text-slate-600">{game.description}</p>
                         <div className="mb-2">
                           <StarBar stars={stars} />
