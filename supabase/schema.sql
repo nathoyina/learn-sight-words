@@ -71,20 +71,52 @@ set search_path = public
 as $$
 declare
   target_student public.students%rowtype;
+  candidate public.students%rowtype;
+  pin_match_count int := 0;
 begin
-  select s.* into target_student
-  from public.students s
-  join public.classes c on c.id = s.class_id
-  where lower(c.code) = lower(class_code)
-    and lower(s.name) = lower(student_name)
-  limit 1;
+  -- Optional class code: when blank, authenticate by child name + PIN only (after initial sign-up).
+  if class_code is not null and trim(class_code) <> '' then
+    select s.* into target_student
+    from public.students s
+    join public.classes c on c.id = s.class_id
+    where lower(c.code) = lower(trim(class_code))
+      and lower(trim(s.name)) = lower(trim(student_name))
+    limit 1;
 
-  if target_student.id is null then
+    if target_student.id is null then
+      raise exception 'invalid_login';
+    end if;
+
+    if extensions.crypt(pin, target_student.pin_hash) <> target_student.pin_hash then
+      raise exception 'invalid_login';
+    end if;
+
+    update public.students
+    set last_seen_at = now()
+    where id = target_student.id;
+
+    return target_student.id;
+  end if;
+
+  for candidate in
+    select s.*
+    from public.students s
+    where lower(trim(s.name)) = lower(trim(student_name))
+  loop
+    if extensions.crypt(pin, candidate.pin_hash) = candidate.pin_hash then
+      pin_match_count := pin_match_count + 1;
+      if pin_match_count = 1 then
+        target_student := candidate;
+      end if;
+    end if;
+  end loop;
+
+  if pin_match_count = 0 then
     raise exception 'invalid_login';
   end if;
 
-  if extensions.crypt(pin, target_student.pin_hash) <> target_student.pin_hash then
-    raise exception 'invalid_login';
+  if pin_match_count > 1 then
+    raise exception 'ambiguous_login';
   end if;
 
   update public.students
@@ -167,6 +199,40 @@ end;
 $$;
 
 grant execute on function public.kid_get_progress(uuid, text) to anon, authenticated;
+
+create or replace function public.kid_get_class_code(student_id uuid, pin text)
+returns text
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  target_student public.students%rowtype;
+  class_code_value text;
+begin
+  select * into target_student
+  from public.students
+  where id = student_id
+  limit 1;
+
+  if target_student.id is null then
+    raise exception 'student_not_found';
+  end if;
+
+  if extensions.crypt(pin, target_student.pin_hash) <> target_student.pin_hash then
+    raise exception 'invalid_login';
+  end if;
+
+  select code into class_code_value
+  from public.classes
+  where id = target_student.class_id
+  limit 1;
+
+  return class_code_value;
+end;
+$$;
+
+grant execute on function public.kid_get_class_code(uuid, text) to anon, authenticated;
 
 create or replace function public.kid_update_progress(student_id uuid, pin text, new_progress jsonb)
 returns void

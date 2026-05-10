@@ -1,6 +1,14 @@
 import type { User } from '@supabase/supabase-js'
 import { supabase } from './supabase'
+import { getLastClassCode } from './storage'
 import type { Klass, Progress, Student } from './types'
+
+function rpcErrorMessage(error: unknown): string {
+  if (error && typeof error === 'object' && 'message' in error) {
+    return String((error as { message?: string }).message ?? '')
+  }
+  return String(error ?? '')
+}
 
 function toProgress(value: unknown): Progress {
   const data = (value as Partial<Progress> | null) ?? {}
@@ -95,13 +103,39 @@ export async function listStudents(classId: string): Promise<Student[]> {
 }
 
 export async function kidLogin(classCode: string, name: string, pin: string): Promise<string> {
-  const { data, error } = await supabase.rpc('kid_login', {
-    class_code: classCode,
-    student_name: name,
-    pin,
-  })
-  if (error || !data) throw error ?? new Error('Login failed')
-  return data as string
+  const run = async (code: string) => {
+    const { data, error } = await supabase.rpc('kid_login', {
+      class_code: code,
+      student_name: name,
+      pin,
+    })
+    if (error) throw error
+    if (!data) throw new Error('Login failed')
+    return data as string
+  }
+
+  const explicit = classCode.trim().toUpperCase()
+  if (explicit) {
+    return run(explicit)
+  }
+
+  try {
+    return await run('')
+  } catch (firstError) {
+    const msg = rpcErrorMessage(firstError).toLowerCase()
+    const remembered = getLastClassCode()?.trim().toUpperCase()
+    const retryable =
+      remembered &&
+      (msg.includes('invalid_login') || msg.includes('ambiguous_login'))
+
+    if (!retryable) throw firstError
+
+    try {
+      return await run(remembered)
+    } catch {
+      throw firstError
+    }
+  }
 }
 
 export async function kidSelfJoin(classCode: string, name: string, pin: string): Promise<string> {
@@ -121,6 +155,15 @@ export async function kidGetProgress(studentId: string, pin: string): Promise<Pr
   })
   if (error) throw error
   return toProgress(data)
+}
+
+export async function kidGetClassCode(studentId: string, pin: string): Promise<string | null> {
+  const { data, error } = await supabase.rpc('kid_get_class_code', {
+    student_id: studentId,
+    pin,
+  })
+  if (error) throw error
+  return typeof data === 'string' && data.trim() ? data.trim().toUpperCase() : null
 }
 
 export async function kidUpdateProgress(studentId: string, pin: string, progress: Progress): Promise<void> {

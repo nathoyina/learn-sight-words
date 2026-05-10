@@ -17,13 +17,12 @@ export function Login() {
   const submit = async () => {
     setLoading(true)
     setError('')
-    const trimmedCode = classCode.trim().toUpperCase()
     const trimmedName = name.trim()
 
     const message =
       mode === 'login'
-        ? await kidLogin(trimmedCode, trimmedName, pin)
-        : await kidSelfJoin(trimmedCode, trimmedName, pin)
+        ? await kidLogin('', trimmedName, pin)
+        : await kidSelfJoin(classCode.trim().toUpperCase(), trimmedName, pin)
 
     setLoading(false)
 
@@ -34,35 +33,39 @@ export function Login() {
     navigate('/')
   }
 
+  const switchMode = (next: 'login' | 'join') => {
+    setMode(next)
+    setError('')
+  }
+
+  const canSubmit =
+    !loading &&
+    name.trim().length > 0 &&
+    pin.length >= 4 &&
+    (mode === 'login' || classCode.trim().length > 0)
+
   return (
     <PageShell title="Child Login">
       <p className="mb-4 text-lg text-slate-700">
-        Enter class code, name, and PIN to continue on any device.
+        {mode === 'login'
+          ? 'Enter your name and PIN to continue.'
+          : 'Enter your name, PIN, and class code from your teacher to create your profile.'}
       </p>
 
       <div className="mb-4 grid gap-2 md:grid-cols-2">
         <BigButton
           label="Login"
-          onClick={() => setMode('login')}
+          onClick={() => switchMode('login')}
           className={mode === 'login' ? '' : 'bg-slate-300 hover:bg-slate-400'}
         />
         <BigButton
           label="Create My Profile"
-          onClick={() => setMode('join')}
+          onClick={() => switchMode('join')}
           className={mode === 'join' ? 'bg-pink-400 hover:bg-pink-500' : 'bg-slate-300 hover:bg-slate-400'}
         />
       </div>
 
       <div className="space-y-3 rounded-2xl bg-purple-50 p-4">
-        <label className="block">
-          <span className="mb-1 block text-sm font-medium">Class Code</span>
-          <input
-            className="w-full rounded-xl border border-purple-200 p-3 text-lg uppercase"
-            value={classCode}
-            onChange={(e) => setClassCode(e.target.value)}
-            placeholder="ABC123"
-          />
-        </label>
         <label className="block">
           <span className="mb-1 block text-sm font-medium">Child Name</span>
           <input
@@ -70,8 +73,10 @@ export function Login() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g. Anna"
+            autoFocus
           />
         </label>
+
         <label className="block">
           <span className="mb-1 block text-sm font-medium">PIN (at least 4 digits)</span>
           <input
@@ -85,12 +90,24 @@ export function Login() {
           />
         </label>
 
+        {mode === 'join' ? (
+          <label className="block">
+            <span className="mb-1 block text-sm font-medium">Class Code</span>
+            <input
+              className="w-full rounded-xl border border-purple-200 p-3 text-lg uppercase"
+              value={classCode}
+              onChange={(e) => setClassCode(e.target.value)}
+              placeholder="ABC123"
+            />
+          </label>
+        ) : null}
+
         {error ? <p className="text-red-600">{error}</p> : null}
 
         <BigButton
           label={loading ? 'Please wait...' : mode === 'login' ? 'Login' : 'Create and Login'}
           onClick={submit}
-          disabled={loading || !classCode.trim() || !name.trim() || pin.length < 4}
+          disabled={!canSubmit}
         />
       </div>
     </PageShell>
