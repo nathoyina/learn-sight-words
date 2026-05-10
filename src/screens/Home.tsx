@@ -96,6 +96,16 @@ export function Home() {
       {syncError ? <p className="mb-3 rounded-xl bg-red-100 p-3 text-sm text-red-700">{syncError}</p> : null}
       {isSyncing ? <p className="mb-3 text-sm text-slate-600">Syncing progress to cloud...</p> : null}
 
+      <div className="mb-6 rounded-2xl border-2 border-orange-200 bg-orange-50 p-4">
+        <h2 className="text-lg font-semibold text-orange-950">Flashcard practice</h2>
+        <p className="mt-1 text-sm text-orange-900/80">
+          Review all 100 sight words anytime — tap to hear each word and move forward or back.
+        </p>
+        <Link to="/flashcards" className="mt-3 block">
+          <BigButton label="Open 100 sight word flashcards" className="w-full bg-orange-400 hover:bg-orange-500" />
+        </Link>
+      </div>
+
       <div className="grid gap-3 md:grid-cols-2">
         <Link to="/quiz">
           <BigButton label="Placement quiz" className="w-full bg-slate-400 hover:bg-slate-500" />
