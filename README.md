@@ -12,6 +12,11 @@ A kid-friendly English learning game for ages ~7 with:
 - Tailwind CSS
 - Supabase (Auth + Postgres + RPC)
 
+
+## Demo
+
+View public link on vercel here: https://learn-sight-words.vercel.app
+
 ## Local setup
 
 1. Install dependencies:
@@ -54,9 +59,6 @@ Kid access uses RPC functions (not direct table reads):
 - `npm run lint`
 - `npm run build`
 
-## Demo
-
-View public link on vercel here: https://learn-sight-words.vercel.app
 
 ## Cross-device smoke test
 
