@@ -3,30 +3,26 @@ import { useNavigate } from 'react-router-dom'
 import { BigButton } from '../components/BigButton'
 import { PageShell } from '../components/PageShell'
 import { useProgress } from '../lib/useProgress'
-import { getLastClassCode } from '../lib/storage'
 
 export function Login() {
   const navigate = useNavigate()
   const { kidLogin, kidSelfJoin } = useProgress()
-  const rememberedCode = getLastClassCode() ?? ''
-  const [classCode, setClassCode] = useState(rememberedCode)
+  const [classCode, setClassCode] = useState('')
   const [name, setName] = useState('')
   const [pin, setPin] = useState('')
-  const [mode, setMode] = useState<'login' | 'join'>(rememberedCode ? 'login' : 'join')
+  const [mode, setMode] = useState<'login' | 'join'>('login')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [showClassCode, setShowClassCode] = useState(!rememberedCode)
 
   const submit = async () => {
     setLoading(true)
     setError('')
-    const trimmedCode = classCode.trim().toUpperCase()
     const trimmedName = name.trim()
 
     const message =
       mode === 'login'
-        ? await kidLogin(trimmedCode, trimmedName, pin)
-        : await kidSelfJoin(trimmedCode, trimmedName, pin)
+        ? await kidLogin('', trimmedName, pin)
+        : await kidSelfJoin(classCode.trim().toUpperCase(), trimmedName, pin)
 
     setLoading(false)
 
@@ -40,22 +36,20 @@ export function Login() {
   const switchMode = (next: 'login' | 'join') => {
     setMode(next)
     setError('')
-    if (next === 'join') {
-      setShowClassCode(true)
-    } else if (rememberedCode) {
-      setShowClassCode(false)
-      setClassCode(rememberedCode)
-    }
   }
 
-  const canSubmit = !loading && classCode.trim().length > 0 && name.trim().length > 0 && pin.length >= 4
+  const canSubmit =
+    !loading &&
+    name.trim().length > 0 &&
+    pin.length >= 4 &&
+    (mode === 'login' || classCode.trim().length > 0)
 
   return (
     <PageShell title="Child Login">
       <p className="mb-4 text-lg text-slate-700">
-        {mode === 'login' && rememberedCode && !showClassCode
+        {mode === 'login'
           ? 'Enter your name and PIN to continue.'
-          : 'Enter your name, PIN, and class code to continue on any device.'}
+          : 'Enter your name, PIN, and class code from your teacher to create your profile.'}
       </p>
 
       <div className="mb-4 grid gap-2 md:grid-cols-2">
@@ -79,7 +73,7 @@ export function Login() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g. Anna"
-            autoFocus={mode === 'login' && Boolean(rememberedCode)}
+            autoFocus
           />
         </label>
 
@@ -96,7 +90,7 @@ export function Login() {
           />
         </label>
 
-        {showClassCode ? (
+        {mode === 'join' ? (
           <label className="block">
             <span className="mb-1 block text-sm font-medium">Class Code</span>
             <input
@@ -105,33 +99,8 @@ export function Login() {
               onChange={(e) => setClassCode(e.target.value)}
               placeholder="ABC123"
             />
-            {rememberedCode && mode === 'login' ? (
-              <button
-                type="button"
-                onClick={() => {
-                  setClassCode(rememberedCode)
-                  setShowClassCode(false)
-                }}
-                className="mt-2 text-sm text-purple-700 underline"
-              >
-                Use saved class ({rememberedCode})
-              </button>
-            ) : null}
           </label>
-        ) : (
-          <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white/70 px-3 py-2 text-sm">
-            <span className="text-slate-700">
-              Class: <span className="font-mono font-bold">{classCode}</span>
-            </span>
-            <button
-              type="button"
-              onClick={() => setShowClassCode(true)}
-              className="text-purple-700 underline"
-            >
-              Use a different class
-            </button>
-          </div>
-        )}
+        ) : null}
 
         {error ? <p className="text-red-600">{error}</p> : null}
 

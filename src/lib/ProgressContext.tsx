@@ -89,7 +89,10 @@ function mapKidJoinError(error: unknown): string {
 
 function mapKidLoginError(error: unknown): string {
   const msg = getErrorMessage(error)
-  if (msg.includes('invalid_login')) return 'Invalid class code, name, or PIN.'
+  if (msg.includes('ambiguous_login')) {
+    return 'More than one profile matches that name and PIN. Ask your teacher for your class code, then use “Create My Profile” or contact support.'
+  }
+  if (msg.includes('invalid_login')) return 'Invalid name or PIN. Check with your teacher if you forgot them.'
   if (msg.includes('student_not_found')) return 'Student profile not found. Please create a profile first.'
   return 'Unable to log in right now. Please try again.'
 }
@@ -225,7 +228,8 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
           const session: ActiveStudentSession = { studentId, pin, displayName }
           setActiveStudent(session)
           setActiveStudentState(session)
-          setLastClassCode(classCode)
+          const trimmed = classCode.trim()
+          if (trimmed) setLastClassCode(trimmed.toUpperCase())
           return null
         } catch (error) {
           return mapKidLoginError(error)
