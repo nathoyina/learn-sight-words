@@ -17,6 +17,7 @@ import { L4ThemeSort } from './games/L4ThemeSort'
 import { L5SentenceBuilder } from './games/L5SentenceBuilder'
 import { L5FillBlank } from './games/L5FillBlank'
 import { Login } from './screens/Login'
+import { SightWordFlashcards } from './screens/SightWordFlashcards'
 import { TeacherAuth } from './screens/TeacherAuth'
 import { TeacherDashboard } from './screens/TeacherDashboard'
 
@@ -46,6 +47,7 @@ function App() {
         <Route path="/" element={<RequireChild><Home /></RequireChild>} />
         <Route path="/quiz" element={<RequireChild><PlacementQuiz /></RequireChild>} />
         <Route path="/map" element={<RequireChild><LevelMap /></RequireChild>} />
+        <Route path="/flashcards" element={<RequireChild><SightWordFlashcards /></RequireChild>} />
 
         <Route path="/games/l1/flashcards" element={<RequireChild><L1Flashcards /></RequireChild>} />
         <Route path="/games/l1/hear-and-tap" element={<RequireChild><L1HearAndTap /></RequireChild>} />
