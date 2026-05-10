@@ -54,6 +54,10 @@ Kid access uses RPC functions (not direct table reads):
 - `npm run lint`
 - `npm run build`
 
+## Demo
+
+View public link on vercel here: https://learn-sight-words.vercel.app
+
 ## Cross-device smoke test
 
 1. On device A, teacher signs in and creates a class.
